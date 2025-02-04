@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const widgetSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Widget name is required'],
+    required: [true, 'Name is required'],
     trim: true
   },
   userId: {
@@ -47,28 +47,14 @@ const widgetSchema = new mongoose.Schema({
     type: String,
     enum: ['google', 'facebook']
   }],
-  googlePlaceId: {
-    type: String,
-    sparse: true
-  },
-  facebookPageUrl: {
-    type: String,
-    sparse: true
+  businessDetails: {
+    name: String,
+    googlePlaceId: String,
+    facebookPageUrl: String
   },
   active: {
     type: Boolean,
     default: true
-  },
-  reviewCount: {
-    type: Number,
-    default: 0
-  },
-  totalRating: {
-    type: Number,
-    default: 0
-  },
-  lastSync: {
-    type: Date
   },
   createdAt: {
     type: Date,
@@ -80,7 +66,7 @@ const widgetSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamps pre-save
+// Update timestamp before saving
 widgetSchema.pre('save', function(next) {
   this.updatedAt = new Date();
   next();
