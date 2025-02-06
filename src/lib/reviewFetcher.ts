@@ -2,6 +2,8 @@ import { Review } from '@/lib/types';
 import { RetryManager } from './retry';
 import { RateLimit } from './rateLimit';
 import { reviewCache } from './cache';
+import { reviewModeration } from './reviewModeration';
+import { sentimentAnalyzer } from './sentimentAnalysis';
 interface ApifyGoogleReview {
   reviewId: string;
   reviewerName: string;
@@ -92,8 +94,8 @@ export class ReviewFetcher {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
-        return this.transformGoogleReviews(data);
+        const transformedReviews = this.transformGoogleReviews(data);
+        return reviewModeration.filterReviews(transformedReviews);
       });
 
       // Cache the results
@@ -205,6 +207,28 @@ export class ReviewFetcher {
       console.error('Error fetching all reviews:', error);
       throw error;
     }
+  }
+  private async processReviews(reviews: Review[], widgetId: string) {
+    const sentimentScores = sentimentAnalyzer.batchAnalyze(reviews);
+    
+    const stats = {
+      averageScore: sentimentAnalyzer.getAverageSentiment(reviews),
+      positiveCount: 0,
+      negativeCount: 0,
+      neutralCount: 0
+    };
+  
+    sentimentScores.forEach(score => {
+      if (score.score > 0) stats.positiveCount++;
+      else if (score.score < 0) stats.negativeCount++;
+      else stats.neutralCount++;
+    });
+  
+    await Widget.findByIdAndUpdate(widgetId, { 
+      $set: { sentimentStats: stats }
+    });
+  
+    return reviews;
   }
 }
 

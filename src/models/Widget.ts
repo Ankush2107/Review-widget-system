@@ -56,6 +56,12 @@ const widgetSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  sentimentStats: {
+    averageScore: Number,
+    positiveCount: Number,
+    negativeCount: Number,
+    neutralCount: Number
+  },
   createdAt: {
     type: Date,
     default: Date.now
